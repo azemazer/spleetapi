@@ -4,23 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Group;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\Builder;
 
 class GroupController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-    }
+        $groups = Group::whereHas('users', function (Builder $query) use ($request) {
+            $query->where('id', $request->user()->id);
+        })->get();
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return response($groups);
     }
 
     /**
@@ -28,15 +25,27 @@ class GroupController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string',
+        ]);
+        $group = Group::create($validated);
+        $group->users()->attach($request->user()->id);
+
+        return response($group);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Group $group)
+    public function show(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'group_id' => 'required|integer',
+        ]);
+        $group = Group::findOrFail($validated["group_id"])
+        ->with('users,payments');
+
+        return response($group);
     }
 
     /**
