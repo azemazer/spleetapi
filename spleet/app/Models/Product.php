@@ -10,6 +10,7 @@ class Product extends Model
     protected $fillable = [
         'name',
         'price',
+        'receipt_id',
     ];
 
     public function user(): BelongsTo

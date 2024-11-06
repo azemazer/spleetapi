@@ -18,6 +18,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Receipt::class);
             $table->foreignIdFor(User::class);
+            $table->boolean('creator')->default(false);
         });
     }
 

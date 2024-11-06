@@ -19,9 +19,9 @@ return new class extends Migration
             $table->timestamps();
             $table->string("name");
             $table->integer("price");
-            $table->integer("status");
+            $table->integer("status")->default(0);
             $table->foreignIdFor(Receipt::class);
-            $table->foreignIdFor(User::class);
+            $table->foreignIdFor(User::class)->nullable();
         });
     }
 

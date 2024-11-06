@@ -43,7 +43,13 @@ class GroupController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $group = Group::with('users', 'payments')
+        $group = Group::with(
+            'users', 
+            'payments',
+            'receipts', 
+            'receipts.users',
+            'receipts.products'
+        )
         ->where('id', $id)
         ->first();
 
