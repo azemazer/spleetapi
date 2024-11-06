@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->string("name");
+            $table->string("code")->unique();
+            $table->integer("admin");
         });
     }
 

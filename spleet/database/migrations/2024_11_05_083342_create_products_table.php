@@ -19,6 +19,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string("name");
             $table->integer("price");
+            $table->integer("status");
             $table->foreignIdFor(Receipt::class);
             $table->foreignIdFor(User::class);
         });

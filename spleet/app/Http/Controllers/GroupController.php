@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
 class GroupController extends Controller
 {
@@ -13,9 +14,7 @@ class GroupController extends Controller
      */
     public function index(Request $request)
     {
-        $groups = Group::whereHas('users', function (Builder $query) use ($request) {
-            $query->where('id', $request->user()->id);
-        })->get();
+        $groups = $request->user()->groups;
 
         return response($groups);
     }
@@ -28,6 +27,11 @@ class GroupController extends Controller
         $validated = $request->validate([
             'name' => 'required|string',
         ]);
+        $additional_store_array = [
+            'admin' => $request->user()->id,
+            'code' => Str::random(10),
+        ];
+        $validated = array_merge($additional_store_array, $validated);
         $group = Group::create($validated);
         $group->users()->attach($request->user()->id);
 
@@ -37,38 +41,56 @@ class GroupController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request)
+    public function show(Request $request, $id)
     {
-        $validated = $request->validate([
-            'group_id' => 'required|integer',
-        ]);
-        $group = Group::findOrFail($validated["group_id"])
-        ->with('users,payments');
+        $group = Group::with('users', 'payments')
+        ->where('id', $id)
+        ->first();
 
         return response($group);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified resource in storage.
      */
-    public function edit(Group $group)
+    public function update(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'id'    => 'required|integer',
+            'name'  => 'required|string',
+        ]);
+        $group = Group::find($validated['id']);
+        $group->name = $validated['name'];
+        $group->save();
+        return response($group);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Join a group.
      */
-    public function update(Request $request, Group $group)
+    public function join(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'code'  => 'required|string',
+        ]);
+
+        $group = Group::where('code', $validated['code'])->first();
+        if(!$group){
+            return response('No group found.');
+        }
+
+        $group->users()->sync($request->user()->id, false);
+        return response($group);
+
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Group $group)
+    public function destroy(Request $request, $id)
     {
-        //
+        $group = Group::findOrFail($id);
+        $group->delete();
+        return response('Deleted');
     }
 }
