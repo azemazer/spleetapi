@@ -21,10 +21,13 @@ class ReceiptController extends Controller
             'products.*.name' => 'required|string',
             'products.*.price' => 'required|integer',
         ]);
+        $params = $request->all();
         $receipt = Receipt::create([
             "name" => $validated["name"],
-            "group_id" => $validated["group"]
+            "group_id" => $validated["group"],
+            "image" => isset($params["image"]) ? $params["image"] : null
         ]);
+
         $receipt->users()->attach($request->user(), [
             "creator" => true
         ]);
@@ -63,9 +66,48 @@ class ReceiptController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Receipt $receipt)
+    public function update(Request $request)
     {
-        //
+        // dd("e");
+        $validated = $request->validate([
+            'id' => 'required|integer',
+            'name' => 'required|string',
+            'removed_ids' => 'required|array',
+            'products' => 'required|array',
+            'products.*.name' => 'required|string',
+            'products.*.price' => 'required|integer',
+        ]);
+
+        // On save le nom du receipt
+        Receipt::where('id', $validated["id"])
+        ->update(["name" => $validated['name']]);
+
+        // On supprime les relations produit ticket qui sont à supprimer
+        Product::destroy($validated['removed_ids']);
+
+        // On boucle sur les produits. On ajoute les produits sans ID et on update les produits avec ID
+        foreach ($validated["products"] as $product){
+            if (isset($product["id"]) && $product["id"] > 0){
+                Product::where('id', $product["id"])
+                ->update([
+                    "name" => $product["name"] ,
+                    "price" => $product["price"] ,
+                ]);
+            } else {
+                Product::create([
+                    "name" => $product["name"],
+                    "price" => $product["price"],
+                    "receipt_id" => $validated["id"],
+                ]);
+            }
+        }
+
+        $updated_receipt = Receipt::with('users', 'products')
+        ->where('id', $validated["id"])
+        ->firstOrFail();
+
+        return response(Receipt::find($updated_receipt));
+
     }
 
     /**

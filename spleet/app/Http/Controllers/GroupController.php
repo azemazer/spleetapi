@@ -65,10 +65,10 @@ class GroupController extends Controller
             'id'    => 'required|integer',
             'name'  => 'required|string',
         ]);
-        $group = Group::find($validated['id']);
-        $group->name = $validated['name'];
-        $group->save();
-        return response($group);
+        Group::where('id', $validated['id'])
+        ->update(["name" => $validated['name']]);
+
+        return response(Group::find($validated["id"]));
     }
 
     /**
