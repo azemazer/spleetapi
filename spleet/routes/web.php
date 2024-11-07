@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GroupController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ReceiptController;
 
 Route::get('/', function () {
@@ -41,5 +42,10 @@ Route::put('/ticket', [ReceiptController::class, 'update'])
 Route::delete('/ticket/{id}', [ReceiptController::class, 'destroy'])
     ->middleware('auth')
     ->name('ticket_destroy');
+
+// Product
+Route::put('/product', [ProductController::class, 'update'])
+    ->middleware('auth')
+    ->name('product_update');
 
 require __DIR__.'/auth.php';

@@ -76,6 +76,7 @@ class ReceiptController extends Controller
             'products' => 'required|array',
             'products.*.name' => 'required|string',
             'products.*.price' => 'required|integer',
+            'products.*.id' => 'nullable|integer',
         ]);
 
         // On save le nom du receipt
@@ -106,7 +107,7 @@ class ReceiptController extends Controller
         ->where('id', $validated["id"])
         ->firstOrFail();
 
-        return response(Receipt::find($updated_receipt));
+        return response(Receipt::find($validated["id"]));
 
     }
 
