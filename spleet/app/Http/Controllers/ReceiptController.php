@@ -117,7 +117,10 @@ class ReceiptController extends Controller
         $updated_receipt = Receipt::with('users', 'products')
             ->where('id', $validated["id"])
             ->firstOrFail();
-    
+        // Transformer to transform price
+            foreach ($updated_receipt->products as $product){
+                $product->price = floatval($product->price) / 100;
+            }
         return response($updated_receipt);
     }
     
