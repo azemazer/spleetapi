@@ -48,10 +48,13 @@ class GroupController extends Controller
             'payments',
             'receipts', 
             'receipts.users',
-            'receipts.products'
+            'receipts.products',
+            'receipts.products.user'
         )
         ->where('id', $id)
         ->first();
+
+        // Transformer to show 
 
         return response($group);
     }
