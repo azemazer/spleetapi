@@ -54,7 +54,12 @@ class GroupController extends Controller
         ->where('id', $id)
         ->first();
 
-        // Transformer to show 
+        // Transformer to transform price
+        foreach ($group->receipts as $receipt){
+            foreach ($receipt->products as $product){
+                $product->price = floatval($product->price) / 100;
+            }
+        }
 
         return response($group);
     }
