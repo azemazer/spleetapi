@@ -32,7 +32,7 @@ class ReceiptController extends Controller
             "creator" => true
         ]);
 
-        foreach($validated["products"] as $product){
+        foreach ($validated["products"] as $product) {
             $additional_product_array = [
                 "receipt_id" => $receipt->id
             ];
@@ -45,8 +45,8 @@ class ReceiptController extends Controller
         }
 
         $final_receipt = Receipt::with('products')
-        ->where('id', $receipt->id)
-        ->firstOrFail();
+            ->where('id', $receipt->id)
+            ->firstOrFail();
         return response($final_receipt);
     }
 
@@ -56,8 +56,8 @@ class ReceiptController extends Controller
     public function show(Receipt $receipt, $id)
     {
         $receipt = Receipt::with('users', 'products')
-        ->where('id', $id)
-        ->firstOrFail();
+            ->where('id', $id)
+            ->firstOrFail();
 
         return response($receipt);
     }
@@ -68,48 +68,60 @@ class ReceiptController extends Controller
      */
     public function update(Request $request)
     {
-        // dd("e");
         $validated = $request->validate([
             'id' => 'required|integer',
             'name' => 'required|string',
-            'removed_ids' => 'required|array',
+            'image' => 'nullable|string',  // Image est une chaîne de caractères (base64)
+            'removed_ids' => 'nullable|array',
             'products' => 'required|array',
             'products.*.name' => 'required|string',
-            'products.*.price' => 'required|integer',
+            'products.*.price' => 'required|numeric',
             'products.*.id' => 'nullable|integer',
+            'products.*.status' => 'nullable|integer',
         ]);
-
-        // On save le nom du receipt
+    
+        // Met à jour le nom du ticket et l'image si présente
         Receipt::where('id', $validated["id"])
-        ->update(["name" => $validated['name']]);
-
-        // On supprime les relations produit ticket qui sont à supprimer
-        Product::destroy($validated['removed_ids']);
-
-        // On boucle sur les produits. On ajoute les produits sans ID et on update les produits avec ID
-        foreach ($validated["products"] as $product){
-            if (isset($product["id"]) && $product["id"] > 0){
+            ->update([
+                "name" => $validated['name'],
+                "image" => isset($validated["image"]) ? $validated["image"] : null,  // Utilisation de validated["image"]
+            ]);
+    
+        // Supprime les relations produit-ticket qui sont à supprimer
+        if (!empty($validated['removed_ids'])) {
+            Product::destroy($validated['removed_ids']);
+        }
+    
+        // Boucle sur les produits pour créer ou mettre à jour
+        foreach ($validated["products"] as $product) {
+            if (!empty($product["id"])) {
+                // Met à jour le produit avec son statut
                 Product::where('id', $product["id"])
-                ->update([
-                    "name" => $product["name"] ,
-                    "price" => $product["price"] ,
-                ]);
+                    ->update([
+                        "name" => $product["name"],
+                        "price" => $product["price"],
+                        "status" => $product["status"], // Met à jour le statut
+                    ]);
             } else {
+                // Crée un nouveau produit avec son statut
                 Product::create([
                     "name" => $product["name"],
                     "price" => $product["price"],
                     "receipt_id" => $validated["id"],
+                    "status" => $product["status"], // Attribue le statut au nouveau produit
                 ]);
             }
         }
-
+    
+        // Récupère les données mises à jour avec les relations
         $updated_receipt = Receipt::with('users', 'products')
-        ->where('id', $validated["id"])
-        ->firstOrFail();
-
-        return response(Receipt::find($validated["id"]));
-
+            ->where('id', $validated["id"])
+            ->firstOrFail();
+    
+        return response($updated_receipt);
     }
+    
+
 
     /**
      * Remove the specified resource from storage.
